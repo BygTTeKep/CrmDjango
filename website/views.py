@@ -2,7 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .forms import SignUpForm, AddRecordForm
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from .models import Record
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .serializer import RecordSerializer
+from rest_framework import permissions
 # Create your views here.
 def home(request):
 	records = Record.objects.all()
@@ -67,7 +72,7 @@ def delete_record(request, pk):
 		return redirect('website:home')
 
 
-def add_record(request):
+def add_record(request:HttpRequest):
 	form = AddRecordForm(request.POST or None)
 	if request.user.is_authenticated:
 		if request.method == "POST":
@@ -75,7 +80,8 @@ def add_record(request):
 				add_record = form.save()
 				messages.success(request, "Record Added")
 				return redirect('website:home')
-
+			else:
+				return HttpResponseBadRequest("Incorrect data")
 		return render(request, 'add_record.html', {"form":form})
 	else:
 		messages.success(request, "You must be Logged in ")
@@ -94,3 +100,22 @@ def update_record(request, pk):
 	else:
 		messages.success(request, "You must be Logged in ")
 		return redirect('website:home')
+	
+class GetRecordListView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+	def get(self, request:HttpRequest):
+		queryset = Record.objects.all()
+		serializer_for_queryset = RecordSerializer(
+			instance=queryset,
+			many=True
+		)
+		return Response(serializer_for_queryset.data)
+	
+class GerRecordDetailView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+	def get(self, request:HttpRequest, pk:int):
+		queryset = Record.objects.get(id=pk)
+		serializer_for_queryset = RecordSerializer(
+			instance=queryset
+		)
+		return Response(serializer_for_queryset.data)

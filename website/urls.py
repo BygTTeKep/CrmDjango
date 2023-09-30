@@ -1,5 +1,14 @@
 from django.urls import path
-from .views import home, logout_user,register_user, customer_record,delete_record, add_record, update_record
+from .views import (home,
+                    logout_user,
+                    register_user,
+                    customer_record,
+                    delete_record,
+                    add_record,
+                    update_record,
+                    GetRecordListView,
+                    GerRecordDetailView,
+)
 
 app_name = "website"
 urlpatterns = [
@@ -11,4 +20,6 @@ urlpatterns = [
     path('delete_record/<int:pk>', delete_record, name='delete_record'),
     path('update_record/<int:pk>', update_record, name='update_record'),
     path('add_record/', add_record, name='add_record'),
+    path('api/record', GetRecordListView.as_view(), name='apiRecord'),
+    path('api/record/<int:pk>', GerRecordDetailView.as_view(), name='apiRecordDetails'),
 ]
