@@ -1,0 +1,37 @@
+version: '2.21'
+services:
+  redis_crm:
+    image: redis:alpine3.18
+    container_name: redis_crm
+    ports:
+      - "6379:6379"
+    command: redis-server
+    hostname: redis_crm
+    volumes:
+      - .:/dcrm
+  
+  celery_crm:
+    build: 
+      context: .
+    hostname: celery_crm
+    entrypoint: celery
+    command: -A celery_config.app worker -l INFO
+    links:
+      - redis_crm
+    depends_on:
+      - redis_crm
+
+  flower_crm:
+    build:
+        context: .
+    hostname: flower
+    entrypoint: celery
+    command: -A celery_config.app flower
+    volumes:
+        - .:/dcrm
+    links:
+        - redis_crm
+    depends_on:
+        - redis_crm
+    ports:
+        - "5555:5555"

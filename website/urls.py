@@ -9,6 +9,7 @@ from .views import (home,
                     GetRecordListView,
                     GerRecordDetailView,
 )
+from .tasks import update_record_task
 
 app_name = "website"
 urlpatterns = [

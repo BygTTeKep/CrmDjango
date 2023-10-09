@@ -8,9 +8,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializer import RecordSerializer
 from rest_framework import permissions
+from django.core.cache import cache
+
 # Create your views here.
 def home(request):
-	records = Record.objects.all()
+	record_cache = cache.get("record_cache")
+	if record_cache:
+		records = record_cache
+	else:
+		records = Record.objects.all()
+		cache.set("record_cache", records, 60)
 	if request.method == "POST":
 		username = request.POST["username"]
 		password = request.POST["password"]
@@ -54,6 +61,13 @@ def register_user(request):
 
 def customer_record(request, pk):
 	if request.user.is_authenticated:
+		# customer_record_cache = cache.get("customer_record")
+		# if customer_record_cache:
+		# 	customer_record = customer_record_cache
+		# else:
+		# 	customer_record = Record.objects.get(id=pk)
+		# 	cache.set("customer_record", customer_record, 60)
+		
 		customer_record = Record.objects.get(id=pk)
 		return render(request, 'record.html', {'customer_record':customer_record})
 	else:
@@ -65,6 +79,9 @@ def delete_record(request, pk):
 	if request.user.is_authenticated:
 		delete_it = Record.objects.get(id=pk)
 		delete_it.delete()
+
+		cache.delete("record_cache")
+
 		messages.success(request, "Record Deleted successfully")
 		return redirect('website:home')
 	else:
@@ -78,6 +95,9 @@ def add_record(request:HttpRequest):
 		if request.method == "POST":
 			if form.is_valid():
 				add_record = form.save()
+
+				cache.delete("record_cache")
+
 				messages.success(request, "Record Added")
 				return redirect('website:home')
 			else:
@@ -94,6 +114,9 @@ def update_record(request, pk):
 		form = AddRecordForm(request.POST or None, instance=current_record)
 		if form.is_valid():
 			form.save()
+
+			cache.delete("record_cache")
+
 			messages.success(request, "Record has been updated! ")
 			return redirect('website:home')
 		return render(request, 'update_record.html', {"form":form})
